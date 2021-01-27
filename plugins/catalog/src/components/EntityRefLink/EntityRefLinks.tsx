@@ -13,21 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import { Entity, EntityName } from '@backstage/catalog-model';
+import React from 'react';
+import { EntityRefLink } from './EntityRefLink';
 
-import { JsonObject, JsonValue } from '@backstage/config';
+type EntityRefLinksProps = {
+  entityRefs: (Entity | EntityName)[];
+  defaultKind?: string;
+};
 
-export type ReadFileFunc = (path: string) => Promise<string>;
-export type ReadSecretFunc = (
-  path: string,
-  desc: JsonObject,
-) => Promise<JsonValue | undefined>;
-export type SkipFunc = (path: string) => boolean;
-
-/**
- * Common context that provides all the necessary hooks for reading configuration files.
- */
-export type ReaderContext = {
-  env: { [name in string]?: string };
-  readFile: ReadFileFunc;
-  readSecret: ReadSecretFunc;
+// TODO: Move into a shared helper package
+export const EntityRefLinks = ({
+  entityRefs,
+  defaultKind,
+}: EntityRefLinksProps) => {
+  return (
+    <>
+      {entityRefs.map((r, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && ', '}
+          <EntityRefLink entityRef={r} defaultKind={defaultKind} />
+        </React.Fragment>
+      ))}
+    </>
+  );
 };
