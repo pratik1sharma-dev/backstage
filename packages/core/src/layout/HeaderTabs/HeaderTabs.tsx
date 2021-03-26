@@ -1,4 +1,4 @@
-/*
+``/*
  * Copyright 2020 Spotify AB
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,8 +17,9 @@
 // TODO(blam): Remove this implementation when the Tabs are ready
 // This is just a temporary solution to implementing tabs for now
 
-import React, { useState, useEffect } from 'react';
-import { makeStyles, Tabs, Tab } from '@material-ui/core';
+import React, { useState, useEffect, ReactElement, ComponentType } from 'react';
+import { makeStyles, Tabs, Tab as TabUI, Popover, List, ListItemTextProps, ListItem, ListItemText, ListItemIcon } from '@material-ui/core';
+import ArrowDropDown from '@material-ui/icons/ArrowDropDown';
 
 const useStyles = makeStyles(theme => ({
   tabsWrapper: {
@@ -48,12 +49,51 @@ type HeaderTabsProps = {
   onChange?: (index: number) => void;
   selectedIndex?: number;
 };
+
+type ActionItemProps = {
+  label?: ListItemTextProps['primary'];
+  secondaryLabel?: ListItemTextProps['secondary'];
+  icon?: ReactElement;
+  disabled?: boolean;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void;
+  WrapperComponent?: ComponentType;
+};
+
+const ActionItem = ({
+  label,
+  secondaryLabel,
+  icon,
+  disabled = false,
+  onClick,
+  WrapperComponent = React.Fragment,
+}: ActionItemProps) => {
+  return (
+    <WrapperComponent>
+      <ListItem
+        data-testid="header-action-item"
+        disabled={disabled}
+        button
+        onClick={event => {
+          if (onClick) {
+            onClick(event);
+          }
+        }}
+      >
+        {icon && <ListItemIcon>{icon}</ListItemIcon>}
+        <ListItemText primary={label} secondary={secondaryLabel} />
+      </ListItem>
+    </WrapperComponent>
+  );
+};
+
 export const HeaderTabs = ({
   tabs,
   onChange,
   selectedIndex,
 }: HeaderTabsProps) => {
   const [selectedTab, setSelectedTab] = useState<number>(selectedIndex ?? 0);
+  const [open, setOpen] = React.useState(false);
+  const [anchorElRef, setAnchorElRef] = React.useState(null);
   const styles = useStyles();
 
   const handleChange = (_: React.ChangeEvent<{}>, index: number) => {
@@ -62,6 +102,8 @@ export const HeaderTabs = ({
     }
     if (onChange) onChange(index);
   };
+
+
 
   useEffect(() => {
     if (selectedIndex !== undefined) {
@@ -81,15 +123,33 @@ export const HeaderTabs = ({
         value={selectedTab}
       >
         {tabs.map((tab, index) => (
-          <Tab
+          <TabUI
             label={tab.label}
             key={tab.id}
             value={index}
             className={styles.defaultTab}
             classes={{ selected: styles.selected }}
+            icon={<ArrowDropDown onClick={(event) => { setOpen(true); setAnchorElRef(event.currentTarget) }}
+              />
+            }
           />
         ))}
       </Tabs>
+      <Popover
+        open={open}
+        anchorEl={anchorElRef}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        onClose={() => setOpen(false)}
+      >
+        <List>
+          {tabs.map((actionItem, i) => {
+            return (
+              <ActionItem key={`header-action-menu-${i}`} {...actionItem} />
+            );
+          })}
+        </List>
+      </Popover>
     </div>
   );
 };
